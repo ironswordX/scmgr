@@ -1,0 +1,8 @@
+# Python module cache
+**/__pycache__
+# Python virtual environment
+.venv/
+# Build directories
+build/
+dist/
+src/scmgr.egg-info/

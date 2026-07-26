@@ -1,0 +1,20 @@
+[game]
+path = "~/Games/star-citizen/"
+
+[game.proton]
+# Specify a proton runner to use. If left blank, UMU-Proton will be used.
+runner = ""
+# Specify what proton fixes to apply
+# starcitizen = Apply the Star Citizen proton fixes
+# default = Apply the default proton fixes
+# none = Do not apply any proton fixes (NOT RECOMMENDED!)
+fixes = "starcitizen"
+sync = "ntsync"
+
+[game.proton.renderer]
+# false = Use DXVK (Vulkan); true = Use WINED3D (OpenGL)  
+opengl = false
+
+[game.graphics.shaders]
+# Specify the cache size.
+cache_size = "10G"
