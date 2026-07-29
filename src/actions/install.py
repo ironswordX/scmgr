@@ -100,7 +100,7 @@ def action_install(logger, opts, config):
         run(f"wine \"{str(installer_file)}\" /S", hide=not opts.verbose, env=env)
 
         logger.info("Setting up configuration file...")
-        config_file = Path.home()  / ".config/scmgr.toml"
+        config_file = opts.config.expanduser()
         config_file.parent.mkdir(parents=True, exist_ok=True)
         if config_file.exists():
             logger.warn("Configuration file already exists, skipping!")

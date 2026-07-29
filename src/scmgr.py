@@ -1,4 +1,4 @@
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 
 import argparse
 import tomlkit
@@ -6,7 +6,6 @@ from pathlib import Path
 from logs import logger as create_logger
 from actions.install import action_install
 from actions.launch import action_launch
-import PySimpleGUI as sg
 
 def merge_config(default, override):
     for key, value in override.items():
@@ -30,12 +29,12 @@ def main():
     opts_general.add_argument("-v", "--verbose", action="store_true", default=False, help="Enable verbose output")
     opts_general.add_argument("-c", "--config", type=Path, default=Path.home() / ".config/scmgr.toml", help="Path to configuration file")
 
-    actions = parser.add_subparsers(dest="action", title="Actions")
+    actions = parser.add_subparsers(dest="action", title="Actions", required=True)
 
     # MARK: action def: install
     actions_install = actions.add_parser("install", help="Install Star Citizen")
     actions_install.set_defaults(func=action_install, action="install")
-    actions_install.add_argument("game_dir", default="~/Games/star-citizen", help="Specify the game directory for installation\n(Default: ~/Games/star-citizen)")
+    actions_install.add_argument("--game-dir", nargs="?", default="~/Games/star-citizen", help="Specify the game directory for installation\n(Default: ~/Games/star-citizen)")
     actions_install.add_argument("--install-dxvk-nvapi", action="store_true", default=False, help="Add support for NVIDIA-specific features (i.e. DLSS)")
 
     # MARK: action def: launch

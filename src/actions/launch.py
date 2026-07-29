@@ -5,7 +5,6 @@ import os
 from pathlib import Path
 
 def action_launch(logger, opts, config):
-    sg.one_line_progress_meter("Starting game...", 1, 5, "testing", no_button=True, orientation="h")
     logger.info("Performing pre-flight checks...")
     if not shutil.which("umu-run"):
         logger.fatal("umu-run is required but was not found on the system")
@@ -30,7 +29,7 @@ def action_launch(logger, opts, config):
     
     gpu_vendors = []
     if opts.override_gpu_vendor:
-        found.append(opts.override_gpu_vendor)
+        gpu_vendors.append(opts.override_gpu_vendor)
     else:
         VENDORS = { "0x10de": "nvidia", "0x1002": "amd", "0x8086": "intel" }
         for vendor_file in Path("/sys/class/drm").glob("card*/device/vendor"):
@@ -40,24 +39,31 @@ def action_launch(logger, opts, config):
     
     if "nvidia" in gpu_vendors:
         # NVIDIA shader settings.
-        shader_size_raw = CONFIG_GRAPHICS_SHADERS.get('cache_size').strip().lower()
-        UNITS = { "g": 1024 ** 3, "m": 1024 ** 2 }
-        if shader_size_raw[-1] in UNITS:
-            shader_size = int(float(shader_size_raw[:-1]) * UNITS[shader_size_raw[-1]])
+        shader_size_raw = str(CONFIG_GRAPHICS_SHADERS.get("cache_size", "")).strip().lower()
+        units = {"g": 1024 ** 3, "m": 1024 ** 2}
+        try:
+            shader_size = int(float(shader_size_raw[:-1]) * units[shader_size_raw[-1]])
+        except (IndexError, KeyError, ValueError):
+            logger.warning(
+                f"Invalid NVIDIA shader cache size {shader_size_raw!r}; using the driver default"
+            )
+            shader_size = None
 
-        env.update({
+        nvidia_shader_env = {
             # Avoid clearing cache when restarting the game
             "__GL_SHADER_DISK_CACHE": "1",
             "__GL_SHADER_DISK_CACHE_SKIP_CLEANUP": "1",
             "__GL_SHADER_DISK_CACHE_PATH": f"{CONFIG_GAME_DIR}/shader_cache",
-            "__GL_SHADER_DISK_CACHE_SIZE": f"{shader_size}" 
-        })
+        }
+        if shader_size is not None:
+            nvidia_shader_env["__GL_SHADER_DISK_CACHE_SIZE"] = str(shader_size)
+        env.update(nvidia_shader_env)
         logger.debug("Applied NVIDIA shader settings")
     else:
         # Mesa shader settings. (AMD/Intel)
         env.update({
             "MESA_SHADER_CACHE_DIR": f"{CONFIG_GAME_DIR}/shader_cache",
-            "MESA_SHADER_CACHE_MAX_SIZE": f"{CONFIG_GRAPHICS_SHADERS.get('shader_cache')}"
+            "MESA_SHADER_CACHE_MAX_SIZE": str(CONFIG_GRAPHICS_SHADERS.get("cache_size", "")),
         })
         logger.debug("Applied Mesa (AMD/Intel) shader settings")
     
@@ -133,13 +139,15 @@ def action_launch(logger, opts, config):
         env.update({"PROTONPATH": str(proton_path)})
         logger.debug(f"{runner} Proton runner will be used")
 
+    proton_runner_resolve()
+    env.update({ "WINEDLLOVERRIDES": "winemenubuilder.exe=d" })
+    logger.debug(f"Environment: {env}")
+
     logger.info("Liftoff!")
     logger.debug("Launching game.")
     print("=" * shutil.get_terminal_size().columns)
 
     # MARK: run game
-    proton_runner_resolve()
-    env.update({ "WINEDLLOVERRIDES": "nvcuda=n,winemenubuilder.exe=d" })
     process = subprocess.Popen(
         [
             "umu-run",
@@ -154,4 +162,4 @@ def action_launch(logger, opts, config):
         process.terminate()
         return
 
-    sys.exit(result.returncode)
+    sys.exit(result)
