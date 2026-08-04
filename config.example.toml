@@ -1,7 +1,13 @@
 [game]
 path = "~/Games/star-citizen/"
+gamemode = false
+
+[game.wine]
+runner = "lug-wine"
 
 [game.proton]
+# Enable/disable running the game with Proton
+enabled = false
 # Specify a proton runner to use. If left blank, UMU-Proton will be used.
 runner = ""
 # Specify what proton fixes to apply

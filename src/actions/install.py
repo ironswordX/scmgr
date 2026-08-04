@@ -1,24 +1,32 @@
 import os
 import sys
 import yaml
+import json
 import asyncio
+import tarfile
 import subprocess
 import contextlib
 from pathlib import Path
 from urllib import request
+from tomlkit import dump as toml_dump
 from urllib.parse import quote as url_sanitize
 from hashlib import sha512
 from base64 import b64decode
 from tempfile import TemporaryDirectory
-#from mkwineprefix import create_wine_prefix
 
 from invoke import run
 
 def generate_default_config(install_dir):
     return f"""[game]
 path = "{Path(install_dir).expanduser()}"
+gamemode = false
+
+[game.wine]
+runner = "lug-wine"
 
 [game.proton]
+# Enable/disable running the game with Proton
+enabled = false
 # Specify a proton runner to use. If left blank, UMU-Proton will be used.
 runner = ""
 # Specify what proton fixes to apply
@@ -29,7 +37,7 @@ fixes = "starcitizen"
 sync = "ntsync"
 
 [game.proton.renderer]
-# false = Use DXVK (Vulkan); true = Use WINED3D (OpenGL)
+# false = Use DXVK (Vulkan); true = Use WINED3D (OpenGL)  
 opengl = false
 
 [game.graphics.shaders]
@@ -98,6 +106,31 @@ def action_install(logger, opts, config):
         env.update({ "WINEDLLOVERRIDES": "dxwebsetup.exe,dotNetFx45_Full_setup.exe,winemenubuilder.exe=d" })
         logger.info("Running installer...")
         run(f"wine \"{str(installer_file)}\" /S", hide=not opts.verbose, env=env)
+        
+        logger.info("Setting up wine runners...")
+        Path(game_dir / "wine_runners").mkdir(exist_ok=True)
+        runner_data = {}
+        logger.debug("Fetching latest runner data...")
+        latest_runner_manifest_raw = request.urlopen("https://api.github.com/repos/starcitizen-lug/lug-wine/releases/latest")
+        latest_runner_manifest = json.load(latest_runner_manifest_raw)
+        runner_data["lug-wine"] = {
+            "version": latest_runner_manifest["name"]
+        }
+        logger.debug("Downloading runner tarball...")
+        # just in case github messes with the ordering in the json data
+        latest_runner = next(
+            asset for asset in latest_runner_manifest["assets"]
+            if asset["name"].startswith("lug-wine-tkg-git-")
+        )
+        runner_data["lug-wine"]["folder"] = latest_runner["name"].removesuffix(".tar.gz")
+        latest_runner_tarball_file = tmp_dir / latest_runner["name"]
+        request.urlretrieve(latest_runner["browser_download_url"], latest_runner_tarball_file)
+        logger.debug("Extracting runner...")
+        with tarfile.open(latest_runner_tarball_file, "r:gz") as tar:
+            tar.extractall(game_dir / "wine_runners")
+        logger.debug("Writing to runners.toml ...")
+        with open(game_dir / "wine_runners/runners.toml", "w") as f:
+            toml_dump(runner_data, f)
 
         logger.info("Setting up configuration file...")
         config_file = opts.config.expanduser()
