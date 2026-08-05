@@ -1,7 +1,8 @@
 # scmgr
 `scmgr` is a command-line tool for managing and launching Star Citizen installations.
 
-## Migrating from lug-helper
+## Migrating from lug-helper (OUTDATED)
+> NOTE: This section is outdated as of [version 1.1.0](https://github.com/ironswordX/scmgr/releases/tag/1.1.0) due to incompatibilities with the two runner systems. This will be fixed in [version 1.2.0](https://github.com/ironswordX/scmgr/milestone/1).
 Migrating from `lug-helper` is relatively simple, as all you have to do is tell the launcher to use the already existing wine prefix. For a single launch, you can specify the location of the prefix:
 ```
 scmgr launch --game-dir <your-wine-prefix>
