@@ -6,3 +6,5 @@
 build/
 dist/
 src/scmgr.egg-info/
+# Testing
+lug-helper/

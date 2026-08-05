@@ -1,11 +1,13 @@
-VERSION = "1.1.1"
+VERSION = "1.2.0-alpha.1"
 
 import argparse
 import tomlkit
 from pathlib import Path
 from logs import logger as create_logger
+
 from actions.install import action_install
 from actions.launch import action_launch
+from actions.migrate import action_migrate
 
 def merge_config(default, override):
     for key, value in override.items():
@@ -70,6 +72,11 @@ def main():
 
     launch_opts_proton.add_argument("--proton-renderer-opengl", action="store_true", help="Use the legacy WINED3D (OpenGL) renderer for Proton")
     launch_opts_proton.add_argument("--proton-sync", choices=["ntsync", "fsync", "esync"], help="Switch between the NTSYNC, FSYNC, and ESYNC")
+
+    # MARK: action def: migrate
+    actions_migrate = actions.add_parser("migrate", help="Migrate from lug-helper")
+    actions_migrate.set_defaults(func=action_migrate, action="migrate")
+    actions_migrate.add_argument("game_dir", nargs="?", default="~/Games/star-citizen", help="Specify the game directory for migration\n(Default: ~/Games/star-citizen)")
 
     opts = parser.parse_args()
 
