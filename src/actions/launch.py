@@ -21,7 +21,7 @@ def action_launch(logger, opts, config):
     env.update({ "WINEPREFIX": str(CONFIG_GAME_DIR) })
     logger.debug(f"Using game directory: {CONFIG_GAME_DIR}")
 
-    CONFIG_GAMEMODE = CONFIG_GAME.get("gamemode") or opts.gamemode
+    CONFIG_GAMEMODE = opts.gamemode or CONFIG_GAME.get("gamemode")
 
     CONFIG_GRAPHICS = CONFIG_GAME.get("graphics")
     CONFIG_GRAPHICS_SHADERS = CONFIG_GRAPHICS.get("shaders")
@@ -112,45 +112,39 @@ def action_launch(logger, opts, config):
             case _:
                 logger.debug("Sync implementation not specified or unknown, ignoring & using default")
 
-        def proton_runner_resolve():
-            runner = opts.proton_runner or CONFIG_PROTON.get("runner")
+        runner = opts.proton_runner or CONFIG_PROTON.get("runner")
 
-            if not runner:
-                logger.debug("umu's default proton runner will be used")
-                return
+        if not runner:
+            logger.debug("umu's default proton runner will be used")
+            return
+        
+        proton_paths = [
+            Path("/usr/share/steam/compatibilitytools.d"),
+            Path("/usr/lib/steam/compatibilitytools.d"),
+            Path.home() / ".steam/root/compatibilitytools.d",
+            Path.home() / ".local/share/Steam/compatibilitytools.d",
+            Path.home() / ".var/app/com.valvesoftware.Steam/.local/share/Steam/compatibilitytools.d",
+        ]
+        
+        runners = {}
+        for path in proton_paths:
+            if path.exists():
+                for runner_path in path.iterdir():
+                    if runner_path.is_dir():
+                        runners[runner_path.name] = runner_path
+        logger.debug(f"Found Proton runners: {list(runners)}")
 
-            proton_paths = [
-                Path("/usr/share/steam/compatibilitytools.d"),
-                Path("/usr/lib/steam/compatibilitytools.d"),
-                Path.home() / ".steam/root/compatibilitytools.d",
-                Path.home() / ".local/share/Steam/compatibilitytools.d",
-                Path.home() / ".var/app/com.valvesoftware.Steam/.local/share/Steam/compatibilitytools.d",
-            ]
-
-            runners = {}
-
-            for path in proton_paths:
-                if path.exists():
-                    for runner_path in path.iterdir():
-                        if runner_path.is_dir():
-                            runners[runner_path.name] = runner_path
-
-            logger.debug(f"Found Proton runners: {list(runners)}")
-
-            if runner in runners:
-                proton_path = runners[runner]
-            else:
-                proton_path = Path(runner).expanduser().resolve()
-
+        if runner in runners:
+            proton_path = runners[runner]
+        else:
+            proton_path = Path(runner).expanduser().resolve()
             proton_binary = proton_path / "proton"
 
-            if not proton_binary.is_file() or not os.access(proton_binary, os.X_OK):
-                raise FileNotFoundError(f"Invalid Proton runner: {proton_path}")
+        if not proton_binary.is_file() or not os.access(proton_binary, os.X_OK):
+            raise FileNotFoundError(f"Invalid Proton runner: {proton_path}")
 
-            env.update({"PROTONPATH": str(proton_path)})
-            logger.debug(f"{runner} Proton runner will be used")
-
-        proton_runner_resolve()
+        env.update({"PROTONPATH": str(proton_path)})
+        logger.debug(f"{runner} Proton runner will be used")
     else:
         logger.info("Launching game with Wine")
         CONFIG_WINE = config.get("wine") or {}
