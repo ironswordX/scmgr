@@ -1,6 +1,6 @@
 [project]
 name="scmgr"
-version="1.2.0-alpha.1"
+version="1.2.0-alpha.2"
 authors=[
     { name = "Alex M" }
 ]

@@ -110,7 +110,8 @@ def action_launch(logger, opts, config):
                 env.update({ "PROTON_NO_NTSYNC": "1", "PROTON_NO_FSYNC": "1", "PROTON_NO_ESYNC": "0" })
                 logger.debug("Using ESYNC sync implementation")
             case _:
-                logger.debug("Sync implementation not specified or unknown, ignoring & using default")
+                logger.debug("Sync implementation not specified or unknown, ignoring & using default (ESYNC)")
+                env.update({ "PROTON_NO_NTSYNC": "1", "PROTON_NO_FSYNC": "1", "PROTON_NO_ESYNC": "0" })
 
         runner = opts.proton_runner or CONFIG_PROTON.get("runner")
 

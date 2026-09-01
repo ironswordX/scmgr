@@ -1,4 +1,4 @@
-VERSION = "1.2.0-alpha.1"
+VERSION = "1.2.0-alpha.2"
 
 import argparse
 import tomlkit
@@ -8,6 +8,7 @@ from logs import logger as create_logger
 from actions.install import action_install
 from actions.launch import action_launch
 from actions.migrate import action_migrate
+from actions.runners import action_runners
 
 def merge_config(default, override):
     for key, value in override.items():
@@ -30,6 +31,7 @@ def main():
     opts_general.add_argument("-h", "--help", action="help", help="Show this help message and exit")
     opts_general.add_argument("-v", "--verbose", action="store_true", default=False, help="Enable verbose output")
     opts_general.add_argument("-c", "--config", type=Path, default=Path.home() / ".config/scmgr.toml", help="Path to configuration file")
+    opts_general.add_argument("-g", "--game-dir", type=Path, default=Path("~/Games/star-citizen"), help="Use an alternate Star Citizen installation location")
 
     actions = parser.add_subparsers(dest="action", title="Actions", required=True)
 
@@ -44,7 +46,6 @@ def main():
     actions_launch.set_defaults(func=action_launch, action="launch")    
 
     launch_opts_game = actions_launch.add_argument_group("Game Configuration")
-    launch_opts_game.add_argument("-g", "--game-dir", type=Path, help="Use an alternate Star Citizen installation location")
     launch_opts_game.add_argument("--gamemode", default=False, help="Use Feral GameMode when running the game")
 
     launch_opts_hardware = actions_launch.add_argument_group("Hardware")
@@ -76,7 +77,12 @@ def main():
     # MARK: action def: migrate
     actions_migrate = actions.add_parser("migrate", help="Migrate from lug-helper")
     actions_migrate.set_defaults(func=action_migrate, action="migrate")
-    actions_migrate.add_argument("game_dir", nargs="?", default="~/Games/star-citizen", help="Specify the game directory for migration\n(Default: ~/Games/star-citizen)")
+
+    # MARK: action def: runners
+    actions_runners = actions.add_parser("runners", help="Manage installed Wine runners")
+    actions_runners.set_defaults(func=action_runners, action="runners")
+    runners_actions = actions_runners.add_subparsers(dest="runner_action", title="Runner Actions", required=True)
+    runners_actions.add_parser("update", help="Update Wine runner")
 
     opts = parser.parse_args()
 
