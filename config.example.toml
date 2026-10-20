@@ -3,7 +3,10 @@ path = "~/Games/star-citizen/"
 gamemode = false
 
 [game.wine]
+# Wine runner to use
 runner = "lug-wine"
+# Whether or not to use DXVK_ASYNC (does not affect Proton, since it uses vkd3d)
+dxvk_async = false
 
 [game.proton]
 # Enable/disable running the game with Proton

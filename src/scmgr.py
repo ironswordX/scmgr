@@ -1,4 +1,4 @@
-VERSION = "1.2.0-alpha.2"
+VERSION = "1.2.0-alpha.3"
 
 import argparse
 import tomlkit
@@ -31,7 +31,7 @@ def main():
     opts_general.add_argument("-h", "--help", action="help", help="Show this help message and exit")
     opts_general.add_argument("-v", "--verbose", action="store_true", default=False, help="Enable verbose output")
     opts_general.add_argument("-c", "--config", type=Path, default=Path.home() / ".config/scmgr.toml", help="Path to configuration file")
-    opts_general.add_argument("-g", "--game-dir", type=Path, default=Path("~/Games/star-citizen"), help="Use an alternate Star Citizen installation location")
+    opts_general.add_argument("-g", "--game-dir", type=Path, help="Use an alternate Star Citizen installation location")
 
     actions = parser.add_subparsers(dest="action", title="Actions", required=True)
 
@@ -46,16 +46,19 @@ def main():
     actions_launch.set_defaults(func=action_launch, action="launch")    
 
     launch_opts_game = actions_launch.add_argument_group("Game Configuration")
-    launch_opts_game.add_argument("--gamemode", default=False, help="Use Feral GameMode when running the game")
+    launch_opts_game.add_argument("--gamemode", help="Use Feral GameMode when running the game")
 
     launch_opts_hardware = actions_launch.add_argument_group("Hardware")
     launch_opts_hardware.add_argument("--override-gpu-vendor", choices=["intel", "amd", "nvidia"], help="Override automatic GPU vendor detection (useful in unusual configurations)")
+    launch_opts_hardware.add_argument("--nvidia-vram-exhaustion-fix-dxvk", help="!! EXPERIMENTAL !! Adds DXVK configuration to Wine/Proton to fix VRAM exhaustion issues. Expected format: `vram`, where `vram` is the amount of VRAM in MiB.")
+    launch_opts_hardware.add_argument("--nvidia-vram-exhaustion-fix-vulkan", help="!! EXPERIMENTAL !! Adds Vulkan configuration to Wine/Proton to fix VRAM exhaustion issues. Expected format: `vram,devid`, where `vram` is the amount of VRAM in MiB, and `devid` is the PCI device ID of the GPU (i.e. `0x28a1`)")
 
     launch_opts_wine = actions_launch.add_argument_group("Wine Configuration")
-    launch_opts_wine.add_argument("--runner", default="lug-wine", help="Wine runner to use")
+    launch_opts_wine.add_argument("--wine-runner", default="lug-wine", help="Wine runner to use")
+    launch_opts_wine.add_argument("--wine-async-dxvk", action="store_true", help="Use asynchronous DXVK in Wine")
 
     launch_opts_proton = actions_launch.add_argument_group("Proton Configuration")
-    launch_opts_proton.add_argument("-p", "--proton", action="store_true", default=False, help="Run the game using Proton instead of Wine (prone to bugs)")
+    launch_opts_proton.add_argument("-p", "--proton", action="store_true", help="Run the game using Proton instead of Wine (prone to bugs)")
     launch_opts_proton.add_argument("--proton-runner", help="Proton runner to use (either a directory or a runner name)")
 
     launch_opt_protonfixes_options = {
