@@ -1,5 +1,4 @@
-VERSION = "1.2.0-alpha.3"
-
+import os
 import argparse
 import tomlkit
 from pathlib import Path
@@ -9,6 +8,11 @@ from actions.install import action_install
 from actions.launch import action_launch
 from actions.migrate import action_migrate
 from actions.runners import action_runners
+
+if "__compiled__" in globals():
+    VERSION = os.environ.get("SCMGR_BUILD_TIME_VERSION")
+else:
+    VERSION = "1.2.0-alpha.3"
 
 def merge_config(default, override):
     for key, value in override.items():
@@ -21,7 +25,7 @@ def merge_config(default, override):
 def main():
     parser = argparse.ArgumentParser(
         prog="scmgr",
-        description="Star Citizen Manager",
+        description=f"scmgr (Star Citizen Manager) v{VERSION}",
         formatter_class=argparse.RawTextHelpFormatter,
         add_help=False
     )
@@ -34,6 +38,11 @@ def main():
     opts_general.add_argument("-g", "--game-dir", type=Path, help="Use an alternate Star Citizen installation location")
 
     actions = parser.add_subparsers(dest="action", title="Actions", required=True)
+
+    actions_version = actions.add_parser("version", help="Show the version of scmgr")
+    def action_version(_, __, ___):
+        print(f"scmgr (Star Citizen Manager) version {VERSION}")
+    actions_version.set_defaults(func=action_version, action="version")
 
     # MARK: action def: install
     actions_install = actions.add_parser("install", help="Install Star Citizen")
@@ -76,6 +85,7 @@ def main():
 
     launch_opts_proton.add_argument("--proton-renderer-opengl", action="store_true", help="Use the legacy WINED3D (OpenGL) renderer for Proton")
     launch_opts_proton.add_argument("--proton-sync", choices=["ntsync", "fsync", "esync"], help="Switch between the NTSYNC, FSYNC, and ESYNC")
+    launch_opts_proton.add_argument("--proton-wayland", action="store_true", help="Use Wayland instead of X11 for rendering.")
 
     # MARK: action def: migrate
     actions_migrate = actions.add_parser("migrate", help="Migrate from lug-helper")

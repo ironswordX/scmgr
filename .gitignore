@@ -6,5 +6,8 @@
 build/
 dist/
 src/scmgr.egg-info/
+scmgr.build/
+scmgr.dist/
+scmgr.onefile-build/
 # Testing
 lug-helper/

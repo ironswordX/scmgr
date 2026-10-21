@@ -66,7 +66,7 @@ def action_launch(logger, opts, config):
             nvidia_shader_env.update({ "DXVK_CONFIG": f"dxgi.maxDeviceMemory = {opts.nvidia_vram_exhaustion_fix_dxvk};cachedDynamicResources = a;" })
         elif opts.nvidia_vram_exhaustion_fix_vulkan is not None:
             logger.warn("VRAM exhaustion is experimental! It may not have any effect, or could possibly break Vulkan! Use at your own risk!")
-            exhaust_size, exhaust_devid = opts.nvidia_vram_exhaustion_fix.split(",")
+            exhaust_size, exhaust_devid = opts.nvidia_vram_exhaustion_fix_vulkan.split(",")
             nvidia_shader_env.update({
                 "VK_LOADER_LAYERS_ENABLE": "VK_LAYER_MESA_vram_report_limit",
                 "VK_VRAM_REPORT_LIMIT_HEAP_SIZE": exhaust_size,
@@ -131,6 +131,9 @@ def action_launch(logger, opts, config):
             "PROTON_NO_ESYNC": str(int(CONFIG_PROTON_SYNC != "esync")),
         })
 
+        CONFIG_PROTON_WAYLAND = opts.proton_wayland or CONFIG_PROTON.get("wayland")
+        if (CONFIG_PROTON_WAYLAND): env.update({ "PROTON_ENABLE_WAYLAND": "1" })
+
         runner = opts.proton_runner or CONFIG_PROTON.get("runner")
 
         if not runner:
@@ -189,6 +192,7 @@ def action_launch(logger, opts, config):
     # MARK: run game
     process = subprocess.Popen(
         [
+            *(["taskset", "-c", "0-7"]),
             *(["gamemoderun"] if CONFIG_GAMEMODE else []),
             *(["umu-run"] if CONFIG_PROTON_ENABLED else [WINE_RUNNER]),
             #f"{CONFIG_GAME_DIR}/drive_c/Program Files/Roberts Space Industries/RSI Launcher/RSI Launcher.exe"

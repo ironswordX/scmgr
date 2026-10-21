@@ -42,8 +42,7 @@ python3 -m venv .venv
 <h3>Build as a binary (RECOMMENDED)</h3>
 
 ```sh
-pip install -r standalone-reqs.txt
-pyinstaller scmgr.spec
+make build
 ```
 This will create a standalone `scmgr` binary located at `dist/scmgr`, which you can put into a folder of your choosing, as long as it's in your PATH. For user installations, you can put it in `~/.local/bin/`
 

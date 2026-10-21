@@ -1,0 +1,29 @@
+name: build-push
+on:
+  push:
+    paths:
+      - 'src/**'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: patchelf zstd libzstd-dev
+      - name: Build scmgr
+        shell: bash
+        run: |
+          make build build_identifier=${GITHUB_SHA:0:7}
+      - id: name
+        run: |
+          FILE=$(ls dist/ | head -1)
+          echo "name=$FILE" >> "$GITHUB_OUTPUT"
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.name.outputs.name }}
+          path: dist/
